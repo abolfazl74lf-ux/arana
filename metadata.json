@@ -1,0 +1,6 @@
+{
+  "name": "Home Management",
+  "description": "اپلیکیشن جامع مدیریت خانه با نمای تعاملی ایزومتریک و ابزارهای تخصصی هر اتاق",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
