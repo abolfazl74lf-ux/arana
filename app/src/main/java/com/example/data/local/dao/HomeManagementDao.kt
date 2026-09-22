@@ -76,6 +76,9 @@ interface HomeManagementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLivingCleaningTask(task: LivingCleaningTask): Long
 
+    @Query("DELETE FROM living_cleaning_tasks WHERE id = :id")
+    suspend fun deleteLivingCleaningTask(id: Long)
+
     @Query("SELECT * FROM plant_care_items ORDER BY daysUntilWatering ASC")
     fun getAllPlants(): Flow<List<PlantCareItem>>
 

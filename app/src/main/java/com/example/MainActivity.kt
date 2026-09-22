@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,12 +23,15 @@ import com.example.domain.model.RoomType
 import com.example.ui.home.HomeOverviewScreen
 import com.example.ui.home.HomeViewModel
 import com.example.ui.navigation.Screen
+import com.example.ui.notification.RequestNotificationPermissionEffect
+import com.example.ui.personal.PersonalCareScreen
 import com.example.ui.rooms.BedroomScreen
 import com.example.ui.rooms.KidsRoomScreen
 import com.example.ui.rooms.KitchenScreen
 import com.example.ui.rooms.LivingRoomScreen
 import com.example.ui.rooms.YardScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.timeline.DailyTimelineScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +55,10 @@ fun HomeManagementApp(
     viewModel: HomeViewModel = viewModel()
 ) {
     val navController = rememberNavController()
+    val roomImageUris by viewModel.roomImageUris.collectAsStateWithLifecycle()
+
+    // Gracefully handle POST_NOTIFICATIONS permission request on Android 13+
+    RequestNotificationPermissionEffect()
 
     NavHost(
         navController = navController,
@@ -78,37 +87,60 @@ fun HomeManagementApp(
                         RoomType.KIDS_ROOM -> navController.navigate(Screen.KidsRoom.route)
                         RoomType.YARD -> navController.navigate(Screen.Yard.route)
                     }
+                },
+                onNavigateToPersonalCare = {
+                    navController.navigate(Screen.PersonalCare.route)
+                },
+                onNavigateToDailyTimeline = {
+                    navController.navigate(Screen.DailyTimeline.route)
                 }
+            )
+        }
+
+        composable(Screen.DailyTimeline.route) {
+            DailyTimelineScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.PersonalCare.route) {
+            PersonalCareScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Kitchen.route) {
             KitchenScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                imageUri = roomImageUris[RoomType.KITCHEN]
             )
         }
 
         composable(Screen.LivingRoom.route) {
             LivingRoomScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                imageUri = roomImageUris[RoomType.LIVING_ROOM]
             )
         }
 
         composable(Screen.Bedroom.route) {
             BedroomScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                imageUri = roomImageUris[RoomType.BEDROOM]
             )
         }
 
         composable(Screen.KidsRoom.route) {
             KidsRoomScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                imageUri = roomImageUris[RoomType.KIDS_ROOM]
             )
         }
 
         composable(Screen.Yard.route) {
             YardScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                imageUri = roomImageUris[RoomType.YARD]
             )
         }
     }

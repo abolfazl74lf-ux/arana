@@ -68,6 +68,7 @@ class HomeRepository(private val dao: HomeManagementDao) {
 
     suspend fun toggleLivingCleaningTask(task: LivingCleaningTask) = dao.updateLivingCleaningTask(task.copy(isDone = !task.isDone))
     suspend fun addLivingCleaningTask(task: LivingCleaningTask) = dao.insertLivingCleaningTask(task)
+    suspend fun deleteLivingCleaningTask(id: Long) = dao.deleteLivingCleaningTask(id)
 
     suspend fun waterPlant(plant: PlantCareItem) = dao.updatePlant(plant.copy(daysUntilWatering = plant.waterIntervalDays))
     suspend fun togglePlantLeafClean(plant: PlantCareItem) = dao.updatePlant(plant.copy(needsLeafCleaning = !plant.needsLeafCleaning))

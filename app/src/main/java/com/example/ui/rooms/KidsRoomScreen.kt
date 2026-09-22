@@ -62,12 +62,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.entity.ChoreItem
 import com.example.data.local.entity.KidsShoppingItem
 import com.example.data.local.entity.StudyTask
+import com.example.ui.components.RoomHeaderBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KidsRoomScreen(
     viewModel: KidsRoomViewModel = viewModel(),
     onBack: () -> Unit,
+    imageUri: String? = null,
     modifier: Modifier = Modifier
 ) {
     val chores by viewModel.chores.collectAsStateWithLifecycle()
@@ -84,19 +86,13 @@ fun KidsRoomScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("اتاق بچه‌ها", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                        Text("چارت مسئولیت‌پذیری، تکالیف و نیازها", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.testTag("kids_back_button")) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            RoomHeaderBanner(
+                title = "اتاق بچه‌ها",
+                subtitle = "چارت مسئولیت‌پذیری، تکالیف و نیازها",
+                roomIcon = Icons.Default.ChildCare,
+                themeColor = androidx.compose.ui.graphics.Color(0xFFF59E0B),
+                imageUri = imageUri,
+                onBack = onBack
             )
         },
         floatingActionButton = {

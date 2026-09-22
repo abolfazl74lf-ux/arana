@@ -1,9 +1,5 @@
 package com.example.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,19 +18,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.ViewInAr
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -46,19 +41,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.R
 import com.example.domain.model.HousekeepingTricksProvider
 import com.example.domain.model.RoomType
+import com.example.ui.components.AnimatedIsometricHouse
 import com.example.ui.components.HousekeepingTrickDetailDialog
-import com.example.ui.components.IsometricHouseCanvas
 import com.example.ui.components.RoomCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +57,8 @@ import com.example.ui.components.RoomCard
 fun HomeOverviewScreen(
     viewModel: HomeViewModel,
     onNavigateToRoom: (RoomType) -> Unit,
+    onNavigateToPersonalCare: () -> Unit = {},
+    onNavigateToDailyTimeline: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val stats by viewModel.overviewStats.collectAsStateWithLifecycle()
@@ -78,31 +71,59 @@ fun HomeOverviewScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        // 1. Calendar/Timeline Icon Button -> Daily Timeline
+                        IconButton(
+                            onClick = onNavigateToDailyTimeline,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .testTag("nav_btn_daily_timeline")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "تایملاین روزانه",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        // 3. Home Icon -> Active Indicator for Current Screen
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .testTag("nav_btn_home_active"),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Home,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(22.dp)
+                                contentDescription = "صفحه اصلی",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "مدیریت جامع خانه",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                            )
-                            Text(
-                                text = "نمای تعاملی فضاهای خانه",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                        // 2. Profile/Person Icon Button -> Personal Care Space
+                        IconButton(
+                            onClick = onNavigateToPersonalCare,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .testTag("nav_btn_personal_care")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "فضای شخصی مدیر خانه",
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -123,91 +144,25 @@ fun HomeOverviewScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Quick Status / Daily Summary Card
+            // 1. Quick Status / Daily Summary Card
             item {
                 HomeDailyBriefCard(stats = stats)
             }
 
-            // SECTION 1: Top Smart House Isometric 3D Visualization
+            // 2. Interactive Isometric House Model (Exploded view)
             item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "۱. نمای هوشمند خانه",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    text = "مدل سه‌بعدی ایزومتریک",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    IsometricHouseCanvas(
-                        stats = stats,
-                        selectedRoom = selectedHighlightRoom,
-                        onRoomClick = { room ->
-                            selectedHighlightRoom = room
-                            onNavigateToRoom(room)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                AnimatedIsometricHouse(
+                    stats = stats,
+                    selectedRoom = selectedHighlightRoom,
+                    onRoomClick = { room ->
+                        selectedHighlightRoom = room
+                        onNavigateToRoom(room)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
-            // SECTION 2: Bottom Submenus List Header
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp, bottom = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "۲. لیست فضاهای خانه (زیرمنوها)",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "ابزارهای مدیریتی، قاب عکس اختصاصی و ترفندهای خانه‌داری",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = "۵ زیرمنو",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
-                    }
-                }
-            }
-
-            // List of Rooms with Live Badges, Photo Frame, Tools and Housekeeping Tricks
+            // 3. Directly Room Submenus List without any intermediate text headers
             items(RoomType.values()) { room ->
                 val statusText = when (room) {
                     RoomType.KITCHEN -> if (stats.kitchenExpiringCount > 0) "${stats.kitchenExpiringCount} ماده رو به اتمام یا انقضا" else "موجودی و وعده‌ها منظم است"

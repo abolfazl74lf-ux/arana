@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Weekend
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -39,6 +40,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -50,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,12 +69,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.entity.GuestChecklistItem
 import com.example.data.local.entity.LivingCleaningTask
 import com.example.data.local.entity.PlantCareItem
+import com.example.ui.components.RoomHeaderBanner
+import com.example.ui.components.SwipeableTaskCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LivingRoomScreen(
     viewModel: LivingRoomViewModel = viewModel(),
     onBack: () -> Unit,
+    imageUri: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cleaningTasks by viewModel.livingCleaningTasks.collectAsStateWithLifecycle()
@@ -80,26 +90,26 @@ fun LivingRoomScreen(
     var showAddPlantDialog by remember { mutableStateOf(false) }
     var showAddGuestDialog by remember { mutableStateOf(false) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     val tabs = listOf("روتین‌های نظافت", "گیاهان آپارتمانی", "چک‌لیست مهمان")
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.testTag("living_snackbar_host")
+            )
+        },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("پذیرایی و نشیمن", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                        Text("نظافت دوره‌ای، گیاهان و تدارک مهمانی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("living_back_button")
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            RoomHeaderBanner(
+                title = "پذیرایی و نشیمن",
+                subtitle = "نظافت دوره‌ای، گیاهان و تدارک مهمانی",
+                roomIcon = Icons.Default.Weekend,
+                themeColor = Color(0xFF0D9488),
+                imageUri = imageUri,
+                onBack = onBack
             )
         },
         floatingActionButton = {
@@ -141,7 +151,21 @@ fun LivingRoomScreen(
             when (selectedTabIndex) {
                 0 -> LivingCleaningTab(
                     tasks = cleaningTasks,
-                    onToggle = { viewModel.toggleLivingCleaningTask(it) }
+                    onToggle = { viewModel.toggleLivingCleaningTask(it) },
+                    onDelete = { task ->
+                        viewModel.onDeleteTask(task)
+                        coroutineScope.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            val result = snackbarHostState.showSnackbar(
+                                message = "وظیفه «${task.title}» حذف شد",
+                                actionLabel = "بازگردانی",
+                                duration = SnackbarDuration.Short
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                viewModel.onUndoDelete()
+                            }
+                        }
+                    }
                 )
                 1 -> PlantsCareTab(
                     plants = plants,
@@ -191,44 +215,57 @@ fun LivingRoomScreen(
 @Composable
 private fun LivingCleaningTab(
     tasks: List<LivingCleaningTask>,
-    onToggle: (LivingCleaningTask) -> Unit
+    onToggle: (LivingCleaningTask) -> Unit,
+    onDelete: (LivingCleaningTask) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp).testTag("living_cleaning_list"),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(tasks, key = { it.id }) { task ->
-            Card(
+            SwipeableTaskCard(
+                itemKey = task.id,
+                taskTitle = task.title,
+                onDelete = { onDelete(task) },
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (task.isDone) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
-                )
+                confirmDialogMessage = "آیا از حذف وظیفه «${task.title}» مطمئن هستید؟",
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (task.isDone) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    IconButton(onClick = { onToggle(task) }) {
-                        Icon(
-                            imageVector = if (task.isDone) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                            contentDescription = null,
-                            tint = if (task.isDone) Color(0xFF388E3C) else MaterialTheme.colorScheme.outline
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = task.title,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = if (task.isDone) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { onToggle(task) }) {
+                            Icon(
+                                imageVector = if (task.isDone) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = if (task.isDone) Color(0xFF388E3C) else MaterialTheme.colorScheme.outline
                             )
-                        )
-                        Text(
-                            text = "تکرار: ${task.frequency} • زمان تقریبی: ${task.estimatedMinutes} دقیقه",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f).padding(end = 28.dp)) {
+                            Text(
+                                text = task.title,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (task.isDone) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface
+                                )
+                            )
+                            Text(
+                                text = "تکرار: ${task.frequency} • زمان تقریبی: ${task.estimatedMinutes} دقیقه",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }

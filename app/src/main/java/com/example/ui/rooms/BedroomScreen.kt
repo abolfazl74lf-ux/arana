@@ -62,12 +62,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.entity.PersonalRoutineItem
 import com.example.data.local.entity.SpaceDeclutterItem
 import com.example.data.local.entity.WardrobeItem
+import com.example.ui.components.RoomHeaderBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BedroomScreen(
     viewModel: BedroomViewModel = viewModel(),
     onBack: () -> Unit,
+    imageUri: String? = null,
     modifier: Modifier = Modifier
 ) {
     val wardrobeItems by viewModel.wardrobeItems.collectAsStateWithLifecycle()
@@ -83,19 +85,13 @@ fun BedroomScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("اتاق خواب", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                        Text("مدیریت البسه، نظم کمدها و آرامش فردی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.testTag("bedroom_back_button")) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            RoomHeaderBanner(
+                title = "اتاق خواب",
+                subtitle = "مدیریت البسه، نظم کمدها و آرامش فردی",
+                roomIcon = Icons.Default.Bed,
+                themeColor = androidx.compose.ui.graphics.Color(0xFF6366F1),
+                imageUri = imageUri,
+                onBack = onBack
             )
         },
         floatingActionButton = {

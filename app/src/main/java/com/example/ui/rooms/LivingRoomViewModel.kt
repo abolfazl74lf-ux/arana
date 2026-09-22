@@ -38,8 +38,26 @@ class LivingRoomViewModel(
     val guestChecklist: StateFlow<List<GuestChecklistItem>> = repository.allGuestChecklist
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private var lastDeletedCleaningTask: LivingCleaningTask? = null
+
     fun toggleLivingCleaningTask(task: LivingCleaningTask) = viewModelScope.launch {
         repository.toggleLivingCleaningTask(task)
+    }
+
+    fun onDeleteTask(task: LivingCleaningTask) {
+        lastDeletedCleaningTask = task
+        viewModelScope.launch {
+            repository.deleteLivingCleaningTask(task.id)
+        }
+    }
+
+    fun onUndoDelete() {
+        lastDeletedCleaningTask?.let { task ->
+            viewModelScope.launch {
+                repository.addLivingCleaningTask(task)
+            }
+            lastDeletedCleaningTask = null
+        }
     }
 
     fun addLivingCleaningTask(title: String, frequency: String, minutes: Int) {

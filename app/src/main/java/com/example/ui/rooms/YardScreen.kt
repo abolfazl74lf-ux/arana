@@ -62,12 +62,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.entity.GardenCalendarItem
 import com.example.data.local.entity.MaintenanceItem
 import com.example.data.local.entity.ToolItem
+import com.example.ui.components.RoomHeaderBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YardScreen(
     viewModel: YardViewModel = viewModel(),
     onBack: () -> Unit,
+    imageUri: String? = null,
     modifier: Modifier = Modifier
 ) {
     val gardenTasks by viewModel.gardenTasks.collectAsStateWithLifecycle()
@@ -83,19 +85,13 @@ fun YardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("حیاط و محوطه بیرون", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                        Text("باغبانی فصلی، تعمیرات دوره‌ای و مدیریت فنی", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.testTag("yard_back_button")) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            RoomHeaderBanner(
+                title = "حیاط و محوطه بیرون",
+                subtitle = "باغبانی فصلی، تعمیرات دوره‌ای و مدیریت فنی",
+                roomIcon = Icons.Default.Yard,
+                themeColor = androidx.compose.ui.graphics.Color(0xFF16A34A),
+                imageUri = imageUri,
+                onBack = onBack
             )
         },
         floatingActionButton = {

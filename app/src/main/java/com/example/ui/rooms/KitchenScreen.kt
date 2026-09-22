@@ -68,12 +68,14 @@ import com.example.data.local.entity.ApplianceCleanRoutine
 import com.example.data.local.entity.MealPlanItem
 import com.example.data.local.entity.PantryItem
 import com.example.data.local.entity.SmartShoppingItem
+import com.example.ui.components.RoomHeaderBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KitchenScreen(
     viewModel: KitchenViewModel = viewModel(),
     onBack: () -> Unit,
+    imageUri: String? = null,
     modifier: Modifier = Modifier
 ) {
     val pantryItems by viewModel.pantryItems.collectAsStateWithLifecycle()
@@ -90,22 +92,13 @@ fun KitchenScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("آشپزخانه", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                        Text("مدیریت مواد، خرید و نظافت", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("kitchen_back_button")
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "بازگشت")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            RoomHeaderBanner(
+                title = "آشپزخانه",
+                subtitle = "مدیریت مواد، خرید و نظافت",
+                roomIcon = Icons.Default.Kitchen,
+                themeColor = Color(0xFFE11D48),
+                imageUri = imageUri,
+                onBack = onBack
             )
         },
         floatingActionButton = {
